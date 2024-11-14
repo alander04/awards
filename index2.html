@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REWARS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #228671ee;
+        }
+        #logo {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 40px;
+        }
+        #logo img {
+            max-width: 200px; 
+            aspect-ratio: 4/3;
+            object-fit: cover;
+        }
+        #loginForm, #categories, #adminPanel {
+            background-color: rgb(169, 211, 198);
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .category {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        button {
+            background-color: #0f8313;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px;
+            display: inline-block;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="logo">
+        <img src="row.jpg" alt="logo">
+    </div>
+
+    <div id="loginForm">
+        <h2>Connexion</h2>
+        <input type="text" id="username" placeholder="Nom d'utilisateur">
+        <input type="password" id="password" placeholder="Mot de passe">
+        <button onclick="login()">Se connecter</button>
+    </div>
+
+    <div id="categories" class="hidden">
+        <h2>Catégories</h2>
+        <div id="categoryList"></div>
+    </div>
+
+    <div id="adminPanel" class="hidden">
+        <h2>Panel Administrateur</h2>
+        <div id="voteResults"></div>
+        <button onclick="addCategory()">Ajouter une catégorie</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUtM-IWQKiDnIRr34xrX-BzbiSJcAdGT4",
+            authDomain: "rewards-680bf.firebaseapp.com",
+            projectId: "rewards-680bf",
+            storageBucket: "rewards-680bf.firebasestorage.app",
+            messagingSenderId: "1062040074776",
+            appId: "1:1062040074776:web:f77fb01f65ca83307ce16d"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const users = [
+            { username: "alan@20", password: "AL20!", isAdmin: true },
+            { username: "al@K20", password: "AC20*", isAdmin: false },
+            { username: "eo@M19", password: "EO19!", isAdmin: false },
+            { username: "lv@K18", password: "LV18#", isAdmin: false },
+            { username: "fd@B19", password: "FD19&", isAdmin: false },
+            { username: "na@F19", password: "NA19*", isAdmin: false },
+            { username: "mj@D19", password: "MJ19/", isAdmin: false },
+            { username: "se@F19", password: "SE19!", isAdmin: false },
+            { username: "ha@D19", password: "A19&", isAdmin: false },
+            { username: "mj@FT19", password: "FT19*", isAdmin: false },
+            { username: "n@MK20", password: "N20%", isAdmin: false },
+            { username: "h@D19", password: "hD19?", isAdmin: false },
+            { username: "li@L20", password: "LM20&", isAdmin: false },
+            { username: "sr@D19", password: "SR19%", isAdmin: false },
+        ];
+
+        let categories = [
+            { name: "Meilleur(e) Président(e)", nominees: ["Luxel", "Eryne", "Sorelle", "Alane", "Harold", "Manich", "Steve", "Nicky"], descriptions: ["Affaires Inutiles", "PDG", "Finances", "Affaires Internes", "Chargé de Communication mais qui ne parle pas beaucoup", "Technique", "Clash gratuits", "Sécrétaire générale"] },
+            { name: "Team O ou E", nominees: ["OKOK", "ERU"], descriptions: ["", ""] },
+            { name: "Meilleur centre de répétition", nominees: ["ORA", "COREX", "PSA", "Domicile", "Centre où sorelle faisait les cours j'ai oublié le nom"], descriptions: ["", "", "", "", ""] },
+        ];
+
+        let currentUser = null;
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const user = users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                currentUser = user;
+                document.getElementById('loginForm').classList.add('hidden');
+                if (user.isAdmin) {
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                    showVoteResults();
+                } else {
+                    document.getElementById('categories').classList.remove('hidden');
+                    showCategories();
+                }
+            } else {
+                alert("Identifiants incorrects");
+            }
+        }
+
+        function showCategories() {
+            const categoryList = document.getElementById('categoryList');
+            categoryList.innerHTML = '';
+            categories.forEach((category, index) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category';
+                categoryDiv.innerHTML = `
+                    <h3>${category.name}</h3>
+                    ${category.nominees.map((nominee, i) => `
+                        <p>${nominee}${category.descriptions[i] ? ': ' + category.descriptions[i] : ''}</p>
+                        <button onclick="vote(${index}, '${nominee}')">Voter</button>
+                    `).join('')}
+                `;
+                categoryList.appendChild(categoryDiv);
+            });
+        }
+
+        function vote(categoryIndex, nominee) {
+            if (currentUser.isAdmin) {
+                alert("Les administrateurs ne peuvent pas voter.");
+                return;
+            }
+            db.collection('votes').add({
+                category: categories[categoryIndex].name,
+                nominee: nominee,
+                voter: currentUser.username,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                alert(`Vote enregistré pour ${nominee} dans la catégorie ${categories[categoryIndex].name}`);
+            })
+            .catch((error) => {
+                console.error("Erreur lors de l'enregistrement du vote: ", error);
+                alert("Une erreur est survenue lors de l'enregistrement du vote.");
+            });
+        }
+
+        function showVoteResults() {
+            const voteResults = document.getElementById('voteResults');
+            voteResults.innerHTML = '<h3>Résultats des votes</h3>';
+            
+            db.collection('votes').get().then((querySnapshot) => {
+                const votes = querySnapshot.docs.map(doc => doc.data());
+                categories.forEach(category => {
+                    const categoryVotes = votes.filter(v => v.category === category.name);
+                    voteResults.innerHTML += `
+                        <h4>${category.name}</h4>
+                        <ul>
+                            ${category.nominees.map(nominee => `
+                                <li>${nominee}: ${categoryVotes.filter(v => v.nominee === nominee).length} votes</li>
+                            `).join('')}
+                        </ul>
+                    `;
+                });
+            });
+        }
+
+        function addCategory() {
+            const categoryName = prompt("Nom de la nouvelle catégorie:");
+            if (categoryName) {
+                const nomineesInput = prompt("Entrez les nommés séparés par des virgules:");
+                const nominees = nomineesInput.split(',').map(n => n.trim());
+                const descriptionsInput = prompt("Entrez les descriptions séparées par des virgules (optionnel):");
+                const descriptions = descriptionsInput ? descriptionsInput.split(',').map(d => d.trim()) : nominees.map(() => "");
+                categories.push({ name: categoryName, nominees: nominees, descriptions: descriptions });
+                showVoteResults();
+            }
+        }
+    </script>
+</body>
+</html>

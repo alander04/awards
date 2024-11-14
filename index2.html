@@ -94,20 +94,20 @@
         const db = firebase.firestore();
 
         const users = [
-            { username: "alan@20", password: "AL20!", isAdmin: true },
-            { username: "al@K20", password: "AC20*", isAdmin: false },
-            { username: "eo@M19", password: "EO19!", isAdmin: false },
-            { username: "lv@K18", password: "LV18#", isAdmin: false },
-            { username: "fd@B19", password: "FD19&", isAdmin: false },
-            { username: "na@F19", password: "NA19*", isAdmin: false },
-            { username: "mj@D19", password: "MJ19/", isAdmin: false },
-            { username: "se@F19", password: "SE19!", isAdmin: false },
-            { username: "ha@D19", password: "A19&", isAdmin: false },
-            { username: "mj@FT19", password: "FT19*", isAdmin: false },
-            { username: "n@MK20", password: "N20%", isAdmin: false },
-            { username: "h@D19", password: "hD19?", isAdmin: false },
-            { username: "li@L20", password: "LM20&", isAdmin: false },
-            { username: "sr@D19", password: "SR19%", isAdmin: false },
+           { username: "alan20@rewards.com", password: "ALAN20E!", isAdmin: true },
+            { username: "alk20@rewards.com", password: "TKAC20*", isAdmin: false },
+            { username: "eom19@rewards.com", password: "MEO19!", isAdmin: false },
+            { username: "lvk18@rewards.com", password: "KKLV18#", isAdmin: false },
+            { username: "fdb19@rewards.com", password: "B19NFD&", isAdmin: false },
+            { username: "naf19@rewards.com", password: "FW19NA*", isAdmin: false },
+            { username: "mjd19@rewards.com", password: "19DBMJ/", isAdmin: false },
+            { username: "sef19@rewards.com", password: "FS19E19!", isAdmin: false },
+            { username: "daf19@rewards.com", password: "A1HD9!", isAdmin: false },
+            { username: "mjf19@rewards.com", password: "FTMJ19*", isAdmin: false },
+            { username: "nmk20@rewards.com", password: "MK20%N", isAdmin: false },
+            { username: "h19@rewards.com", password: "DNH19?", isAdmin: false },
+            { username: "li20@rewards.com", password: "LF2LIM0&", isAdmin: false },
+            { username: "srd19@rewards.com", password: "1DMSR9%", isAdmin: false },
         ];
 
         let categories = [
@@ -119,24 +119,26 @@
         let currentUser = null;
 
         function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const user = users.find(u => u.username === username && u.password === password);
+    const email = document.getElementById('username').value + "@rewars.com"; // Construct email from username
+    const password = document.getElementById('password').value;
 
-            if (user) {
-                currentUser = user;
-                document.getElementById('loginForm').classList.add('hidden');
-                if (user.isAdmin) {
-                    document.getElementById('adminPanel').classList.remove('hidden');
-                    showVoteResults();
-                } else {
-                    document.getElementById('categories').classList.remove('hidden');
-                    showCategories();
-                }
+    firebase.auth().signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            currentUser = userCredential.user;
+            if (userCredential.user.email === "admin@rewars.com") { // Spécifie l'e-mail de l'administrateur
+                document.getElementById('adminPanel').classList.remove('hidden');
+                showVoteResults();
             } else {
-                alert("Identifiants incorrects");
+                document.getElementById('categories').classList.remove('hidden');
+                showCategories();
             }
-        }
+        })
+        .catch((error) => {
+            alert("Identifiants incorrects");
+            console.error(error);
+        });
+}
+
 
         function showCategories() {
             const categoryList = document.getElementById('categoryList');
